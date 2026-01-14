@@ -30,3 +30,37 @@ The project consists of two main components:
    npm run build
    ```
 4. Import the `manifest.json` into Figma Desktop App to load the plugin.
+
+## Prerequisites
+
+To run and test this system locally, you need:
+
+1.  **Frameworks/Runtimes**:
+    *   [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) (for the Backend)
+    *   [Node.js](https://nodejs.org/) (for the Plugin build)
+2.  **Tools**:
+    *   **Figma Desktop App**: Required to load local plugins during development.
+
+## How to Test Loop (Local)
+
+You can test the core logic (Image Capture -> Diff -> Report) without valid Jira/Slack credentials.
+
+1.  **Start the Backend**:
+    *   Open terminal in `backend/` folder.
+    *   Run `dotnet run`.
+    *   Keep this terminal open. It will listen on `http://localhost:5000` (or similar, check output).
+
+2.  **Build & Load Plugin**:
+    *   Open terminal in `plugin/` folder.
+    *   Run `npm install && npm run build`.
+    *   Open Figma Desktop App.
+    *   Go to **Plugins > Development > Import plugin from manifest...**
+    *   Select the `manifest.json` file in your `plugin/` folder.
+
+3.  **Run the Flow**:
+    *   **Baseline**: Select a Frame in Figma -> Open Plugin -> Enter a fake issue key (e.g., `TEST-1`) -> Click **Capture Baseline**.
+    *   **Change**: Modify the Frame in Figma (change color, move text).
+    *   **Compare**: Select the same Frame -> Open Plugin -> Click **Compare & Publish**.
+    *   **View Report**: The plugin will show a link to the HTML report (e.g., `http://localhost:5000/reports/...`). Click to view the visual diff.
+
+*Note: Jira comments and Slack messages will fail silently if not configured in `appsettings.json`, but the visual diff report will still work.*
