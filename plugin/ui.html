@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        :root {
+            --primary: #18A0FB;
+            --primary-hover: #0D8DE3;
+            --bg: #FFFFFF;
+            --text: #333333;
+            --border: #E5E5E5;
+            --error: #F24822;
+            --success: #1BC47D;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 16px;
+            background: var(--bg);
+            color: var(--text);
+            font-size: 12px;
+        }
+        
+        h2 { font-size: 14px; font-weight: 600; margin: 0 0 16px; }
+        
+        .section { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+        .section:last-child { border-bottom: none; }
+
+        .input-group { margin-bottom: 12px; }
+        label { display: block; margin-bottom: 4px; color: #888; font-weight: 500;}
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-sizing: border-box;
+            outline: none;
+            font-family: inherit;
+        }
+        input:focus { border-color: var(--primary); }
+
+        button {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background 0.2s;
+            margin-bottom: 8px;
+        }
+        button:hover { background: var(--primary-hover); }
+        button.secondary {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text);
+        }
+        button.secondary:hover { border-color: #999; }
+        
+        .status { margin-top: 8px; padding: 8px; background: #F5F5F5; border-radius: 4px; display: none; }
+        .status.error { background: #FEE; color: var(--error); }
+        .status.success { background: #E6FFFA; color: var(--success); }
+
+        .row { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+        .item-row { padding: 4px 0; border-bottom: 1px solid #eee; }
+        .item-row span { font-weight: 500; }
+        .item-row a { color: var(--primary); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div id="settings-view">
+        <div class="section">
+            <h2>Settings</h2>
+            <div class="input-group">
+                <label>Backend URL</label>
+                <input type="text" id="backendUrl" value="http://localhost:5000">
+            </div>
+            <button id="saveSettings">Save & Continue</button>
+        </div>
+    </div>
+
+    <div id="main-view" style="display:none;">
+        <div class="section">
+            <h2>Context</h2>
+            <div class="input-group">
+                <label>Jira Issue Key</label>
+                <input type="text" id="issueKey" placeholder="e.g. PROJ-123">
+            </div>
+            <div class="input-group">
+                <label>Slack Channel</label>
+                <input type="text" id="slackChannel" placeholder="e.g. #design-reviews">
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Actions</h2>
+            <button id="btnCapture" class="secondary">Capture Baseline</button>
+            <button id="btnCompare">Compare & Publish</button>
+        </div>
+
+        <div id="results" class="section">
+            <!-- Results list -->
+        </div>
+    </div>
+
+    <script>
+        let settings = {
+            backendUrl: 'http://localhost:5000'
+        };
+
+        // UI Switching
+        const settingsView = document.getElementById('settings-view');
+        const mainView = document.getElementById('main-view');
+
+        document.getElementById('saveSettings').onclick = () => {
+            const url = document.getElementById('backendUrl').value;
+            if(url) {
+                settings.backendUrl = url;
+                parent.postMessage({ pluginMessage: { type: 'save-settings', settings } }, '*');
+                settingsView.style.display = 'none';
+                mainView.style.display = 'block';
+            }
+        };
+
+        document.getElementById('btnCapture').onclick = () => {
+            const issueKey = document.getElementById('issueKey').value;
+             if(!issueKey) return alert("Please enter Issue Key");
+             
+            parent.postMessage({ pluginMessage: { type: 'capture', issueKey } }, '*');
+        };
+
+        document.getElementById('btnCompare').onclick = () => {
+             const issueKey = document.getElementById('issueKey').value;
+             const channel = document.getElementById('slackChannel').value;
+             // Validations
+             if(!issueKey) return alert("Please enter Issue Key");
+             
+            parent.postMessage({ pluginMessage: { type: 'compare', issueKey, slackChannel: channel } }, '*');
+        };
+
+        // Handle Messages
+        window.onmessage = async (event) => {
+            const msg = event.data.pluginMessage;
+            if(!msg) return;
+
+            if (msg.type === 'load-settings') {
+                if(msg.settings) {
+                    settings = msg.settings;
+                    document.getElementById('backendUrl').value = settings.backendUrl || 'http://localhost:5000';
+                    // Auto switch if has settings? Maybe not, allow edit.
+                }
+            } else if (msg.type === 'upload-baseline') {
+                await uploadBaseline(msg.data);
+            } else if (msg.type === 'upload-comparison') {
+                await uploadComparison(msg.data);
+            } else if (msg.type === 'log') {
+               addResult(msg.message, msg.isError);
+            }
+        };
+
+        async function uploadBaseline(data) {
+            const { bytes, metadata, tempId } = data;
+            const blob = new Blob([new Uint8Array(bytes)], { type: 'image/png' });
+            const formData = new FormData();
+            formData.append('file', blob, 'baseline.png');
+            formData.append('metadataJson', JSON.stringify(metadata));
+
+            try {
+                addResult(`Uploading baseline for ${metadata.nodeName}...`);
+                const res = await fetch(`${settings.backendUrl}/api/baselines`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if(!res.ok) throw new Error(res.statusText);
+                const json = await res.json();
+                
+                // Notify code to save ID
+                parent.postMessage({ pluginMessage: { type: 'baseline-success', nodeId: metadata.nodeId, baselineId: json.baselineId } }, '*');
+                addResult(`Baseline saved!`, false);
+            } catch (e) {
+                addResult(`Error uploading: ${e.message}`, true);
+            }
+        }
+
+        async function uploadComparison(data) {
+            const { bytes, metadata } = data;
+            const blob = new Blob([new Uint8Array(bytes)], { type: 'image/png' });
+            const formData = new FormData();
+            formData.append('file', blob, 'after.png');
+            formData.append('metadataJson', JSON.stringify(metadata));
+
+            try {
+                addResult(`Comparing ${metadata.nodeName}...`);
+                const res = await fetch(`${settings.backendUrl}/api/comparisons`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if(!res.ok) throw new Error(res.statusText);
+                const json = await res.json();
+                
+                addResult(`Diff: ${json.changedPercent.toFixed(2)}% - <a href="${json.reportUrl}" target="_blank">Report</a>`, false);
+            } catch (e) {
+                addResult(`Error comparing: ${e.message}`, true);
+            }
+        }
+
+        function addResult(text, isError) {
+            const div = document.createElement('div');
+            div.className = 'item-row';
+            div.style.color = isError ? 'red' : 'inherit';
+            div.innerHTML = `<span>${text}</span>`;
+            document.getElementById('results').prepend(div);
+        }
+    </script>
+</body>
+</html>

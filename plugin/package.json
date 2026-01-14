@@ -1,0 +1,14 @@
+{
+    "name": "figma-diff-plugin",
+    "version": "1.0.0",
+    "description": "Visual Diff to Jira/Slack",
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "watch": "tsc -p tsconfig.json --watch"
+    },
+    "dependencies": {},
+    "devDependencies": {
+        "@figma/plugin-typings": "*",
+        "typescript": "^5.0.0"
+    }
+}

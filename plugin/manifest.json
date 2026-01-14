@@ -1,0 +1,18 @@
+{
+  "name": "Figma Visual Diff -> Jira/Slack",
+  "id": "figma-diff-plugin",
+  "api": "1.0.0",
+  "main": "code.js",
+  "itemBounds": true,
+  "ui": "ui.html",
+  "editorType": [
+    "figma"
+  ],
+  "networkAccess": {
+    "allowedDomains": [
+      "*"
+    ]
+  },
+  "capabilities": [],
+  "enableProposedApi": false
+}
