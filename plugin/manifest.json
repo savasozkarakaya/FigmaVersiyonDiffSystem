@@ -3,7 +3,6 @@
   "id": "figma-diff-plugin",
   "api": "1.0.0",
   "main": "code.js",
-  "itemBounds": true,
   "ui": "ui.html",
   "editorType": [
     "figma"
@@ -11,8 +10,12 @@
   "networkAccess": {
     "allowedDomains": [
       "*"
-    ]
+    ],
+    "reasoning": "Plugin needs to communicate with the local backend server for image diffing and external services (Jira, Slack)."
   },
   "capabilities": [],
+  "permissions": [
+    "currentuser"
+  ],
   "enableProposedApi": false
 }

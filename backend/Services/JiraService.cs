@@ -65,24 +65,4 @@ public class JiraService
         }
     }
 
-    public async Task UploadAttachmentAsync(string issueKey, Stream fileStream, string fileName)
-    {
-        SetupAuth();
-        
-        // Multipart content
-        using var content = new MultipartFormDataContent();
-        using var streamContent = new StreamContent(fileStream);
-        streamContent.Headers.ContentType = new MediaTypeHeaderValue("image/png"); // Assuming PNG
-        content.Add(streamContent, "file", fileName);
-
-        try
-        {
-            var response = await _client.PostAsync($"/rest/api/2/issue/{issueKey}/attachments", content);
-            response.EnsureSuccessStatusCode();
-        }
-        catch (Exception ex)
-        {
-             _logger.LogError(ex, "Error uploading attachment for {IssueKey}", issueKey);
-        }
-    }
 }

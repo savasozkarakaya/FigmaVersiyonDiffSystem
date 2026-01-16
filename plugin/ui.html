@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <style>
         :root {
@@ -20,14 +21,34 @@
             color: var(--text);
             font-size: 12px;
         }
-        
-        h2 { font-size: 14px; font-weight: 600; margin: 0 0 16px; }
-        
-        .section { margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
-        .section:last-child { border-bottom: none; }
 
-        .input-group { margin-bottom: 12px; }
-        label { display: block; margin-bottom: 4px; color: #888; font-weight: 500;}
+        h2 {
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0 0 16px;
+        }
+
+        .section {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            color: #888;
+            font-weight: 500;
+        }
+
         input[type="text"] {
             width: 100%;
             padding: 8px;
@@ -37,7 +58,10 @@
             outline: none;
             font-family: inherit;
         }
-        input:focus { border-color: var(--primary); }
+
+        input:focus {
+            border-color: var(--primary);
+        }
 
         button {
             width: 100%;
@@ -51,31 +75,70 @@
             transition: background 0.2s;
             margin-bottom: 8px;
         }
-        button:hover { background: var(--primary-hover); }
+
+        button:hover {
+            background: var(--primary-hover);
+        }
+
         button.secondary {
             background: transparent;
             border: 1px solid var(--border);
             color: var(--text);
         }
-        button.secondary:hover { border-color: #999; }
-        
-        .status { margin-top: 8px; padding: 8px; background: #F5F5F5; border-radius: 4px; display: none; }
-        .status.error { background: #FEE; color: var(--error); }
-        .status.success { background: #E6FFFA; color: var(--success); }
 
-        .row { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-        .item-row { padding: 4px 0; border-bottom: 1px solid #eee; }
-        .item-row span { font-weight: 500; }
-        .item-row a { color: var(--primary); text-decoration: none; }
+        button.secondary:hover {
+            border-color: #999;
+        }
+
+        .status {
+            margin-top: 8px;
+            padding: 8px;
+            background: #F5F5F5;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .status.error {
+            background: #FEE;
+            color: var(--error);
+        }
+
+        .status.success {
+            background: #E6FFFA;
+            color: var(--success);
+        }
+
+        .row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .item-row {
+            padding: 4px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .item-row span {
+            font-weight: 500;
+        }
+
+        .item-row a {
+            color: var(--primary);
+            text-decoration: none;
+        }
     </style>
 </head>
+
 <body>
     <div id="settings-view">
         <div class="section">
             <h2>Settings</h2>
             <div class="input-group">
                 <label>Backend URL</label>
-                <input type="text" id="backendUrl" value="http://localhost:5000">
+                <input type="text" id="backendUrl" value="http://localhost:5203">
             </div>
             <button id="saveSettings">Save & Continue</button>
         </div>
@@ -107,7 +170,7 @@
 
     <script>
         let settings = {
-            backendUrl: 'http://localhost:5000'
+            backendUrl: 'http://localhost:5203'
         };
 
         // UI Switching
@@ -116,7 +179,7 @@
 
         document.getElementById('saveSettings').onclick = () => {
             const url = document.getElementById('backendUrl').value;
-            if(url) {
+            if (url) {
                 settings.backendUrl = url;
                 parent.postMessage({ pluginMessage: { type: 'save-settings', settings } }, '*');
                 settingsView.style.display = 'none';
@@ -126,29 +189,29 @@
 
         document.getElementById('btnCapture').onclick = () => {
             const issueKey = document.getElementById('issueKey').value;
-             if(!issueKey) return alert("Please enter Issue Key");
-             
+            if (!issueKey) return alert("Please enter Issue Key");
+
             parent.postMessage({ pluginMessage: { type: 'capture', issueKey } }, '*');
         };
 
         document.getElementById('btnCompare').onclick = () => {
-             const issueKey = document.getElementById('issueKey').value;
-             const channel = document.getElementById('slackChannel').value;
-             // Validations
-             if(!issueKey) return alert("Please enter Issue Key");
-             
+            const issueKey = document.getElementById('issueKey').value;
+            const channel = document.getElementById('slackChannel').value;
+            // Validations
+            if (!issueKey) return alert("Please enter Issue Key");
+
             parent.postMessage({ pluginMessage: { type: 'compare', issueKey, slackChannel: channel } }, '*');
         };
 
         // Handle Messages
         window.onmessage = async (event) => {
             const msg = event.data.pluginMessage;
-            if(!msg) return;
+            if (!msg) return;
 
             if (msg.type === 'load-settings') {
-                if(msg.settings) {
+                if (msg.settings) {
                     settings = msg.settings;
-                    document.getElementById('backendUrl').value = settings.backendUrl || 'http://localhost:5000';
+                    document.getElementById('backendUrl').value = settings.backendUrl || 'http://localhost:5203';
                     // Auto switch if has settings? Maybe not, allow edit.
                 }
             } else if (msg.type === 'upload-baseline') {
@@ -156,7 +219,7 @@
             } else if (msg.type === 'upload-comparison') {
                 await uploadComparison(msg.data);
             } else if (msg.type === 'log') {
-               addResult(msg.message, msg.isError);
+                addResult(msg.message, msg.isError);
             }
         };
 
@@ -173,12 +236,16 @@
                     method: 'POST',
                     body: formData
                 });
-                
-                if(!res.ok) throw new Error(res.statusText);
+
+                if (!res.ok) throw new Error(res.statusText);
                 const json = await res.json();
-                
+
                 // Notify code to save ID
-                parent.postMessage({ pluginMessage: { type: 'baseline-success', nodeId: metadata.nodeId, baselineId: json.baselineId } }, '*');
+                parent.postMessage({
+                    pluginMessage: {
+                        type: 'baseline-success', nodeId: metadata.nodeId, baselineId: json.baselineId
+                    }
+                }, '*');
                 addResult(`Baseline saved!`, false);
             } catch (e) {
                 addResult(`Error uploading: ${e.message}`, true);
@@ -198,11 +265,12 @@
                     method: 'POST',
                     body: formData
                 });
-                
-                if(!res.ok) throw new Error(res.statusText);
+
+                if (!res.ok) throw new Error(res.statusText);
                 const json = await res.json();
-                
-                addResult(`Diff: ${json.changedPercent.toFixed(2)}% - <a href="${json.reportUrl}" target="_blank">Report</a>`, false);
+
+                addResult(`Diff: ${json.changedPercent.toFixed(2)}% - <a href="${json.reportUrl}" target="_blank">Report</a>`,
+                    false);
             } catch (e) {
                 addResult(`Error comparing: ${e.message}`, true);
             }
@@ -217,4 +285,5 @@
         }
     </script>
 </body>
+
 </html>

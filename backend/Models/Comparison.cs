@@ -11,7 +11,6 @@ public class Comparison
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public string AfterImagePath { get; set; } = string.Empty;
-    public string DiffImagePath { get; set; } = string.Empty;
     
     public double ChangedPercent { get; set; }
     public int ChangedPixels { get; set; }
